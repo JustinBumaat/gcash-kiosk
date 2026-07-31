@@ -1,0 +1,16 @@
+# Local kiosk settings contain private Telegram, receipt, and network values.
+kiosk_settings.json
+.env
+.env.*
+!.env.example
+
+# Python runtime files.
+__pycache__/
+*.py[cod]
+
+# Receipts are generated locally and may contain customer information.
+static/receipts/
+
+# Operating system files.
+.DS_Store
+Thumbs.db

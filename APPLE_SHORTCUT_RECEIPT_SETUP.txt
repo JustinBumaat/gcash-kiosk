@@ -1,0 +1,36 @@
+APPLE SHORTCUT - RECEIPT IMAGE UPLOAD (EASIEST METHOD)
+=======================================================
+
+Your previous request sent three text fields named Name, Type, and Value.
+That does not contain an image.
+
+Use this setup instead:
+
+1. Shortcut Details
+   - Show in Share Sheet: ON
+   - Receive: Images only
+   - If there is no input: Stop and Respond (do not use Clipboard)
+
+2. Convert Image
+   - Input: Shortcut Input
+   - Format: JPEG
+
+3. Get Contents of URL
+   URL:
+   http://YOUR_PI_OR_PC_IP:5000/api/receipt-share
+
+   Expand the action and choose:
+   - Method: POST
+   - Request Body: File
+   - File: Converted Image
+
+IMPORTANT:
+- Do not choose Request Body: Form for this easiest setup.
+- Do not create text fields named Name, Type, and Value.
+- Run the shortcut from the Photos share sheet while an actual image is selected.
+
+Example local URL:
+http://192.168.254.109:5000/api/receipt-share
+
+If receipt_upload_key is enabled, add it to the URL:
+http://192.168.254.109:5000/api/receipt-share?key=YOUR_KEY

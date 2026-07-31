@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Root-owned helper. The Flask service can invoke only this script via sudo.
+# wlan0 stays on the store network; this script uses the USB adapter (wlan1)
+# as a NetworkManager shared/NAT guest hotspot.
+
+CONNECTION_NAME="gcash-kiosk-guest-wifi"
+TIMEOUT_UNIT="gcash-kiosk-hotspot-timeout"
+NMCLI="/usr/bin/nmcli"
+SYSTEMCTL="/usr/bin/systemctl"
+SYSTEMD_RUN="/usr/bin/systemd-run"
+
+fail() {
+    printf '%s\n' "$1" >&2
+    exit 1
+}
+
+valid_interface() {
+    [[ "$1" =~ ^[A-Za-z0-9_-]+$ ]]
+}
+
+valid_ssid() {
+    [[ -n "$1" && ${#1} -le 32 && "$1" != *$'\n'* && "$1" != *$'\r'* ]]
+}
+
+valid_password() {
+    [[ "$1" =~ ^[A-Za-z0-9]{8,63}$ ]]
+}
+
+start_hotspot() {
+    [[ $# -eq 4 ]] || fail "Usage: start GUEST_INTERFACE PRIMARY_INTERFACE SSID DURATION"
+    local interface="$1"
+    local primary_interface="$2"
+    local ssid="$3"
+    local duration="$4"
+    local password
+    IFS= read -r password || true
+
+    valid_interface "$interface" || fail "Invalid Wi-Fi interface."
+    valid_interface "$primary_interface" || fail "Invalid primary Wi-Fi interface."
+    [[ "$interface" != "$primary_interface" ]] || fail "Guest and primary Wi-Fi interfaces must be different."
+    valid_ssid "$ssid" || fail "Invalid hotspot name."
+    valid_password "$password" || fail "Invalid hotspot password."
+    [[ "$duration" == "300" ]] || fail "Guest Wi-Fi duration must be 300 seconds."
+    command -v "$NMCLI" >/dev/null 2>&1 || fail "NetworkManager is not installed."
+    "$NMCLI" -t -f DEVICE,TYPE,STATE device status | grep -Fxq "${primary_interface}:wifi:connected" || fail "Primary Wi-Fi is not connected."
+    "$NMCLI" -t -f DEVICE,TYPE device status | grep -Fq "${interface}:wifi" || fail "Guest Wi-Fi adapter is unavailable."
+
+    "$SYSTEMCTL" stop "${TIMEOUT_UNIT}.timer" >/dev/null 2>&1 || true
+    "$NMCLI" connection down id "$CONNECTION_NAME" >/dev/null 2>&1 || true
+
+    if ! "$NMCLI" -g NAME connection show | grep -Fxq "$CONNECTION_NAME"; then
+        "$NMCLI" connection add type wifi ifname "$interface" con-name "$CONNECTION_NAME" autoconnect no ssid "$ssid" >/dev/null
+    fi
+
+    "$NMCLI" connection modify "$CONNECTION_NAME" \
+        connection.interface-name "$interface" \
+        connection.autoconnect no \
+        802-11-wireless.mode ap \
+        802-11-wireless.ssid "$ssid" \
+        ipv4.method shared \
+        ipv6.method disabled \
+        wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.psk "$password"
+    "$NMCLI" connection up id "$CONNECTION_NAME" ifname "$interface" >/dev/null
+
+    "$SYSTEMD_RUN" --quiet --collect --unit="$TIMEOUT_UNIT" --on-active="${duration}s" "$0" stop "$interface"
+}
+
+stop_hotspot() {
+    [[ $# -eq 1 ]] || fail "Usage: stop INTERFACE"
+    valid_interface "$1" || fail "Invalid Wi-Fi interface."
+    "$SYSTEMCTL" stop "${TIMEOUT_UNIT}.timer" >/dev/null 2>&1 || true
+    "$NMCLI" connection down id "$CONNECTION_NAME" >/dev/null 2>&1 || true
+    "$NMCLI" connection delete id "$CONNECTION_NAME" >/dev/null 2>&1 || true
+}
+
+case "${1:-}" in
+    start)
+        shift
+        start_hotspot "$@"
+        ;;
+    stop)
+        shift
+        stop_hotspot "$@"
+        ;;
+    *)
+        fail "Usage: $0 {start|stop} ..."
+        ;;
+esac

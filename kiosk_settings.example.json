@@ -1,0 +1,9 @@
+{
+  "telegram_bot_token": "",
+  "telegram_chat_id": "",
+  "receipt_upload_key": "",
+  "wifi_hotspot_enabled": true,
+  "wifi_primary_interface": "wlan0",
+  "wifi_hotspot_interface": "wlan1",
+  "wifi_hotspot_ssid": "Kiosk Guest WiFi"
+}

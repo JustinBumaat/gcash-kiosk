@@ -1,0 +1,153 @@
+GCASH KIOSK SETUP
+Telegram transaction details + local Wi-Fi receipt upload
+
+============================================================
+PART 1 — CREATE THE TELEGRAM BOT
+============================================================
+
+1. On the iPhone, open Telegram and search for @BotFather.
+2. Send /newbot.
+3. Follow the prompts to choose a bot name and username.
+4. BotFather will give you a token that looks like:
+
+   1234567890:AAExampleTokenHere
+
+5. Open the new bot and tap Start, or send it any message.
+
+============================================================
+PART 2 — GET YOUR TELEGRAM CHAT ID
+============================================================
+
+Option A — use the included helper:
+
+   python get_telegram_chat_id.py
+
+Paste your bot token when asked. The helper prints the chat IDs from recent messages.
+
+Option B — use a browser:
+
+   https://api.telegram.org/botYOUR_BOT_TOKEN/getUpdates
+
+Look for:
+
+   "chat": {"id": 123456789, ...}
+
+The number is your private chat ID.
+
+============================================================
+PART 3 — CONFIGURE THE KIOSK
+============================================================
+
+Open kiosk_settings.json and replace the placeholders:
+
+{
+  "telegram_bot_token": "YOUR_BOT_TOKEN",
+  "telegram_chat_id": "YOUR_CHAT_ID",
+  "receipt_upload_key": ""
+}
+
+The receipt_upload_key is optional. Leave it blank for the simplest setup.
+To restrict uploads on your Wi-Fi, enter a secret such as:
+
+  "receipt_upload_key": "my-receipt-key-9281"
+
+Then add the same key to the iPhone Shortcut form field named key.
+
+Restart the kiosk after editing the settings.
+
+============================================================
+PART 4 — TEST TELEGRAM
+============================================================
+
+Start the kiosk:
+
+   python app.py
+
+From another terminal on the Pi:
+
+   curl -X POST http://127.0.0.1:5000/api/telegram/test
+
+A test message should arrive in Telegram.
+
+During a Cash In transaction, the Telegram message includes:
+
+Mobile number
+0927 647 3190
+
+Cash in amount
+₱500.00
+Processing fee
+₱10.00
+Total to pay
+₱510.00
+
+A Copy number button appears below the message.
+
+============================================================
+PART 5 — FIND THE RASPBERRY PI LOCAL IP
+============================================================
+
+On the Raspberry Pi, run:
+
+   hostname -I
+
+Example result:
+
+   192.168.1.52
+
+The receipt upload address is then:
+
+   http://192.168.1.52:5000/api/receipt-share
+
+The iPhone and Raspberry Pi must be on the same Wi-Fi network.
+
+============================================================
+PART 6 — CREATE THE IPHONE RECEIPT SHORTCUT
+============================================================
+
+1. Open Shortcuts on the iPhone.
+2. Create a new shortcut named:
+
+   Send GCash Receipt to Kiosk
+
+3. Open the shortcut details and enable Show in Share Sheet.
+4. Set the accepted input type to Images.
+5. Add the action Get Contents of URL.
+6. Set the URL to the Pi address, for example:
+
+   http://192.168.1.52:5000/api/receipt-share
+
+7. Set Method to POST.
+8. Set Request Body to Form.
+9. Add a form field:
+
+   Name: receipt
+   Value: Shortcut Input
+
+10. Optional form fields:
+
+   phone  — text you want displayed under the receipt
+   amount — text you want displayed under the receipt
+   note   — optional note
+   key    — only required if receipt_upload_key is configured
+
+11. Add Show Notification after Get Contents of URL with text:
+
+   Receipt sent to kiosk
+
+Now, from the GCash receipt image:
+
+1. Tap Share.
+2. Select Send GCash Receipt to Kiosk.
+3. The image uploads directly over local Wi-Fi.
+4. The kiosk receipt screen refreshes automatically and displays it.
+
+============================================================
+IMPORTANT
+============================================================
+
+- Telegram requires internet access on the Raspberry Pi.
+- Receipt upload only requires the iPhone and Pi to be on the same local Wi-Fi.
+- Keep the Telegram bot token private.
+- A changing Pi IP can break the Shortcut. Reserve the Pi's IP in your router,
+  or configure a static IP.

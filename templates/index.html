@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCash Kiosk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=clean-ui-4">
+</head>
+<body>
+    <main class="kiosk-shell">
+        <section id="screen-home" class="screen" aria-labelledby="home-title">
+            <div class="panel home-panel compact-home-panel">
+                <div class="home-selector-header">
+                    <div class="brand-hero">
+                        <img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="brand-logo hero-logo">
+                    </div>
+                    <h1 id="home-title">Select a service</h1>
+                </div>
+
+                <div class="service-stack home-service-stack">
+                    <button class="service-option active-service home-service-button" type="button" onclick="navTo('cashin-number')">
+                        <span class="service-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4z"/><path d="M8 11h8M8 15h5"/></svg>
+                        </span>
+                        <span class="service-copy">
+                            <strong>Cash In</strong>
+                            <small>Enter mobile number and wait for receipt</small>
+                        </span>
+                        <span class="service-arrow" aria-hidden="true">›</span>
+                    </button>
+
+                    <button class="service-option active-service home-service-button" type="button" onclick="navTo('cashout-amount')">
+                        <span class="service-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14"/></svg>
+                        </span>
+                        <span class="service-copy">
+                            <strong>Cash Out</strong>
+                            <small>Create a payment QR code</small>
+                        </span>
+                        <span class="service-arrow" aria-hidden="true">›</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-idle" class="screen idle-screen active" role="button" tabindex="0" aria-label="Tap anywhere to choose a kiosk service" onclick="exitIdleScreen()">
+            <div class="idle-slide-stage" aria-hidden="true">
+                <div class="idle-slider">
+                    <div class="idle-slide-track">
+                        <img class="idle-slide" src="/static/idle/pasalubong-hours.png" alt="">
+                        <img class="idle-slide" src="/static/idle/gcash-services.png" alt="">
+                        <img class="idle-slide" src="/static/idle/pasalubong-hours.png" alt="">
+                    </div>
+                </div>
+            </div>
+            <div class="idle-tap-bar" aria-hidden="true">Tap to begin</div>
+        </section>
+
+        <section id="screen-cashin-number" class="screen" aria-labelledby="cashin-number-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="navTo('home')" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash In · Step 1 of 3</span>
+                    <h2 id="cashin-number-title">Mobile number</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="panel amount-layout">
+                <div class="amount-panel liquid-number-panel">
+                    <div class="phone-entry-card liquid-phone-card">
+                        <div class="phone-display-grid" id="cashin-phone-display" aria-label="Entered phone number digits">
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-gap" aria-hidden="true"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-gap" aria-hidden="true"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                            <span class="phone-cell"></span>
+                        </div>
+
+                        <div class="phone-entry-meta phone-entry-meta-simple">
+                            <div>
+                                <small>Use the customer’s active GCash number, starting with 09.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="numpad" aria-label="Phone keypad">
+                    <button class="num-key" type="button" onclick="pressCashInPhone('1')">1</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('2')">2</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('3')">3</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('4')">4</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('5')">5</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('6')">6</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('7')">7</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('8')">8</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('9')">9</button>
+                    <button class="num-key utility" type="button" onclick="pressCashInPhone('C')">Clear</button>
+                    <button class="num-key" type="button" onclick="pressCashInPhone('0')">0</button>
+                    <button class="num-key utility icon-key" type="button" onclick="pressCashInPhone('BACKSPACE')" aria-label="Delete last digit">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M10 7h9v10h-9l-5-5 5-5Z"/><path d="m13 10 3 4m0-4-3 4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button class="primary-button sticky-action" id="btn-cashin-number-next" type="button" onclick="goToCashInAmount()" disabled>Continue</button>
+        </section>
+
+        <section id="screen-cashin-amount" class="screen" aria-labelledby="cashin-amount-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="navTo('cashin-number')" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash In · Step 2 of 3</span>
+                    <h2 id="cashin-amount-title">Enter amount</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="panel amount-layout">
+                <div class="amount-panel amount-entry-panel">
+                    <span class="amount-label">Cash in amount</span>
+                    <div class="amount-value"><span>₱</span><strong id="cashin-amount-display">0.00</strong></div>
+                    <div class="live-fee-card">
+                        <div class="fee-row"><span>Processing fee</span><strong id="cashin-processing-fee">₱0.00</strong></div>
+                        <p id="cashin-amount-helper">Type the amount using cents. Example: 1234 becomes ₱12.34.</p>
+                    </div>
+                </div>
+
+                <div class="numpad" aria-label="Cash in amount keypad">
+                    <button class="num-key" type="button" onclick="pressCashInAmount('1')">1</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('2')">2</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('3')">3</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('4')">4</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('5')">5</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('6')">6</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('7')">7</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('8')">8</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('9')">9</button>
+                    <button class="num-key utility" type="button" onclick="pressCashInAmount('C')">Clear</button>
+                    <button class="num-key" type="button" onclick="pressCashInAmount('0')">0</button>
+                    <button class="num-key utility icon-key" type="button" onclick="pressCashInAmount('BACKSPACE')" aria-label="Delete last digit">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M10 7h9v10h-9l-5-5 5-5Z"/><path d="m13 10 3 4m0-4-3 4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button class="primary-button sticky-action" id="btn-cashin-amount-next" type="button" onclick="prepareCashInReceiptScreen()" disabled>Continue</button>
+        </section>
+
+        <section id="screen-cashin-receipt" class="screen" aria-labelledby="cashin-receipt-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="navTo('cashin-amount')" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash In · Step 3 of 3</span>
+                    <h2 id="cashin-receipt-title">Payment at counter</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="panel receipt-layout">
+                <div class="review-summary">
+                    <div class="review-service">
+                        <span class="small-service-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v10H4z"/><path d="M8 11h8M8 15h5"/></svg>
+                        </span>
+                        <div><span>Service</span><strong>GCash Cash In</strong></div>
+                    </div>
+
+                    <div class="summary-lines">
+                        <div><span>Mobile number</span><strong id="cashin-review-phone">09__ ___ ____</strong></div>
+                        <div><span>Cash in amount</span><strong id="cashin-review-amount">₱0.00</strong></div>
+                        <div><span>Processing fee</span><strong id="cashin-review-fee">₱0.00</strong></div>
+                    </div>
+
+                    <div class="summary-total">
+                        <span>Total to pay</span>
+                        <strong id="cashin-review-total">₱0.00</strong>
+                    </div>
+                </div>
+
+                <div class="receipt-wait-panel">
+                    <div class="notice-box strong-notice">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9h.01"/></svg>
+                        <p id="cashin-counter-note">Please pay ₱0.00 at the counter.</p>
+                    </div>
+                    <div class="notice-box secondary-note">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9h.01"/></svg>
+                        <p>Wait for the receipt. When the GCash receipt is shared to your iPhone shortcut, it will appear on this screen automatically.</p>
+                    </div>
+
+                    <div class="receipt-card">
+                        <div class="receipt-card-header">
+                            <strong>Receipt display</strong>
+                            <small id="receipt-status">Waiting for receipt…</small>
+                        </div>
+                        <div id="receipt-empty" class="receipt-empty">No receipt has been shared yet.</div>
+                        <img id="receipt-image" class="receipt-image" src="" alt="Shared GCash receipt" hidden>
+                        <div id="receipt-meta" class="receipt-meta" hidden>
+                            <span id="receipt-meta-phone"></span>
+                            <span id="receipt-meta-amount"></span>
+                            <span id="receipt-meta-note"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row receipt-actions">
+                <button id="btn-refresh-receipt" class="secondary-button" type="button" onclick="prepareCashInReceiptScreen(true)">Refresh receipt</button>
+                <button id="btn-receipt-done" class="primary-button" type="button" onclick="navTo('home')">Done</button>
+            </div>
+        </section>
+
+        <section id="screen-cashout-amount" class="screen" aria-labelledby="cashout-amount-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="navTo('home')" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash Out · Step 1 of 3</span>
+                    <h2 id="cashout-amount-title">Enter amount</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="panel amount-layout">
+                <div class="amount-panel amount-entry-panel">
+                    <span class="amount-label">Cash out amount</span>
+                    <div class="amount-value"><span>₱</span><strong id="amount-display">0.00</strong></div>
+                    <div class="live-fee-card">
+                        <div class="fee-row"><span>Processing fee</span><strong id="amount-processing-fee">₱0.00</strong></div>
+                        <p id="amount-helper">Type the amount using cents. Example: 1234 becomes ₱12.34.</p>
+                    </div>
+                </div>
+
+                <div class="numpad" aria-label="Cash out amount keypad">
+                    <button class="num-key" type="button" onclick="press('1')">1</button>
+                    <button class="num-key" type="button" onclick="press('2')">2</button>
+                    <button class="num-key" type="button" onclick="press('3')">3</button>
+                    <button class="num-key" type="button" onclick="press('4')">4</button>
+                    <button class="num-key" type="button" onclick="press('5')">5</button>
+                    <button class="num-key" type="button" onclick="press('6')">6</button>
+                    <button class="num-key" type="button" onclick="press('7')">7</button>
+                    <button class="num-key" type="button" onclick="press('8')">8</button>
+                    <button class="num-key" type="button" onclick="press('9')">9</button>
+                    <button class="num-key utility" type="button" onclick="press('C')">Clear</button>
+                    <button class="num-key" type="button" onclick="press('0')">0</button>
+                    <button class="num-key utility icon-key" type="button" onclick="press('BACKSPACE')" aria-label="Delete last digit">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M10 7h9v10h-9l-5-5 5-5Z"/><path d="m13 10 3 4m0-4-3 4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <button class="primary-button sticky-action" id="btn-next" type="button" onclick="prepareReview()" disabled>Continue</button>
+        </section>
+
+        <section id="screen-review" class="screen" aria-labelledby="review-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="navTo('cashout-amount')" aria-label="Go back">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash Out · Step 2 of 3</span>
+                    <h2 id="review-title">Confirm details</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="review-layout panel">
+                <div class="review-summary">
+                    <div class="review-service">
+                        <span class="small-service-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14"/></svg>
+                        </span>
+                        <div><span>Service</span><strong>GCash Cash Out</strong></div>
+                    </div>
+
+                    <div class="summary-lines">
+                        <div><span>Cash out amount</span><strong id="rev-amount">₱0.00</strong></div>
+                        <div><span>Processing fee</span><strong id="rev-processing-fee">₱0.00</strong></div>
+                    </div>
+
+                    <div class="summary-total">
+                        <span>Total in QR</span>
+                        <strong id="rev-total">₱0.00</strong>
+                    </div>
+                </div>
+
+                <div class="fee-choice-panel">
+                    <div class="fee-choice-heading">
+                        <h3>How will the processing fee be paid?</h3>
+                        <p>Select one option before generating the QR code.</p>
+                    </div>
+
+                    <div class="choice-grid" role="radiogroup" aria-label="Processing fee payment option">
+                        <button id="fee-option-include" class="choice-card" type="button" onclick="selectFeeMode('include')" aria-pressed="false">
+                            <span class="choice-art" aria-hidden="true">
+                                <svg viewBox="0 0 64 64" fill="none">
+                                    <rect x="10" y="14" width="44" height="32" rx="8"></rect>
+                                    <path d="M18 24h28M18 32h16"></path>
+                                    <circle cx="45" cy="38" r="7"></circle>
+                                    <path d="M45 34.5v7M41.5 38h7"></path>
+                                </svg>
+                            </span>
+                            <span class="choice-copy">
+                                <strong>Include in QR</strong>
+                                <small>The processing fee will be added to the QR amount.</small>
+                            </span>
+                        </button>
+
+                        <button id="fee-option-counter" class="choice-card" type="button" onclick="selectFeeMode('counter')" aria-pressed="false">
+                            <span class="choice-art" aria-hidden="true">
+                                <svg viewBox="0 0 64 64" fill="none">
+                                    <rect x="12" y="14" width="40" height="34" rx="8"></rect>
+                                    <path d="M20 24h24M20 32h10M40 37l4 4 8-8"></path>
+                                    <path d="M16 50h32"></path>
+                                </svg>
+                            </span>
+                            <span class="choice-copy">
+                                <strong>Pay at counter</strong>
+                                <small>The QR will contain only the cash out amount. Pay the processing fee separately to the cashier.</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row bottom-actions">
+                <button class="secondary-button" type="button" onclick="navTo('home')">Cancel</button>
+                <button class="primary-button" id="btn-generate" type="button" onclick="generateQR()" disabled>Generate QR code</button>
+            </div>
+        </section>
+
+        <section id="screen-qr" class="screen" aria-labelledby="qr-title">
+            <div class="top-nav compact-nav">
+                <button class="back-button" type="button" onclick="cancelTransaction()" aria-label="Cancel transaction">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6"/></svg>
+                </button>
+                <div class="nav-title">
+                    <span>Cash Out · Step 3 of 3</span>
+                    <h2 id="qr-title">Scan to pay</h2>
+                </div>
+                <div class="nav-brand"><img src="/static/brand-logo.png" alt="Jessie's Pasalubong" class="nav-logo"></div>
+            </div>
+
+            <div class="qr-layout panel">
+                <div class="qr-payment-card">
+                    <div class="qr-header">
+                        <span>Amount in QR</span>
+                        <strong id="qr-amount-display">₱0.00</strong>
+                    </div>
+                    <div class="qr-container">
+                        <div id="qr-loader" class="loader" aria-label="Generating QR code"></div>
+                        <img id="qr-image" hidden src="" alt="GCash payment QR code">
+                    </div>
+                    <p>Open GCash, tap <strong>QR</strong>, then scan this code.</p>
+                </div>
+
+                <div class="qr-side-info">
+                    <div class="details-card">
+                        <div><span>Cash out amount</span><strong id="qr-base-amount">₱0.00</strong></div>
+                        <div><span>Processing fee</span><strong id="qr-processing-fee">₱0.00</strong></div>
+                        <div><span>Fee payment</span><strong id="qr-fee-mode">--</strong></div>
+                        <div><span>Reference</span><strong id="ref-number">---</strong></div>
+                    </div>
+
+                    <div class="payment-progress">
+                        <div class="progress-copy">
+                            <span class="status-dot" aria-hidden="true"></span>
+                            <div><strong id="payment-status">Generating QR code</strong><small>Keep this screen open while paying</small></div>
+                        </div>
+                        <time id="time-left">05:00</time>
+                    </div>
+
+                    <div id="qr-fee-note" class="notice-box qr-note" hidden>
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9h.01"/></svg>
+                        <p id="qr-fee-note-text"></p>
+                    </div>
+
+                    <div class="notice-box qr-note secondary-note">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 10v6m0-9h.01"/></svg>
+                        <p>Wait for the cashier to confirm your payment before leaving the counter.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row qr-actions">
+                <button class="danger-button" type="button" onclick="cancelTransaction()">Cancel</button>
+                <button class="wifi-qr-button" id="btn-wifi-qr" type="button" onclick="openWifiQr()">WiFi QR</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="wifi-qr-modal" class="wifi-qr-modal" role="dialog" aria-modal="true" aria-labelledby="wifi-qr-title" hidden>
+        <section class="wifi-qr-dialog">
+            <button class="wifi-qr-close" type="button" onclick="closeWifiQr()" aria-label="Close WiFi QR popup">×</button>
+            <div class="wifi-qr-heading">
+                <span>Guest WiFi</span>
+                <h2 id="wifi-qr-title">Connect for 5 minutes</h2>
+            </div>
+            <p class="wifi-qr-instruction">Scan this QR code to connect to WiFi. Access automatically ends after 5 minutes.</p>
+            <div class="wifi-qr-image-wrap">
+                <img id="wifi-qr-image" src="" alt="WiFi connection QR code">
+            </div>
+            <div class="wifi-qr-details">
+                <div><span>Network</span><strong id="wifi-qr-ssid">—</strong></div>
+                <div><span>Password</span><strong id="wifi-qr-password">—</strong></div>
+            </div>
+            <div class="wifi-qr-expiry"><span>Available for</span><time id="wifi-qr-time-left">05:00</time></div>
+            <p class="wifi-qr-popup-note">This popup closes in one minute. The WiFi stays available until the timer ends.</p>
+        </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="assertive"></div>
+    <script src="/static/app.js?v=clean-ui-4"></script>
+</body>
+</html>

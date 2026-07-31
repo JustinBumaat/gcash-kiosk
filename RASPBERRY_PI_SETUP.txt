@@ -1,0 +1,83 @@
+GCASH KIOSK — RASPBERRY PI QUICK SETUP
+======================================
+
+Recommended OS:
+- Raspberry Pi OS (64-bit) with Desktop
+
+1. Copy this whole folder to the Raspberry Pi, for example:
+   /home/YOUR_USERNAME/gcash-kiosk
+
+2. Open a Terminal in the folder and run:
+   chmod +x install_pi.sh
+   ./install_pi.sh
+
+3. Add your Telegram details to kiosk_settings.json.
+   Use a newly generated bot token if a previous token was exposed.
+
+4. Enable desktop autologin:
+   sudo raspi-config
+   System Options / Boot or Auto Login / Desktop Autologin
+
+5. Disable screen blanking:
+   sudo raspi-config
+   Display Options / Screen Blanking / Disable
+
+6. Rotate the Waveshare 7-inch screen to portrait:
+   Desktop menu / Preferences / Control Centre / Screens
+   Select the screen, then choose Orientation: Left or Right
+
+7. Reboot:
+   sudo reboot
+
+GUEST WIFI QR (USB WIFI DONGLE)
+===============================
+
+The kiosk keeps its regular store connection on wlan0 and creates the temporary
+guest hotspot on the USB dongle (wlan1). NetworkManager shares the store
+connection through the guest hotspot, so customers can use the internet without
+disconnecting the kiosk.
+
+Before running install_pi.sh, connect the USB WiFi dongle and check both adapters:
+   nmcli device status
+
+Expected setup:
+   wlan0  connected to the store's main WiFi
+   wlan1  available for the guest hotspot
+
+If the built-in adapter is not wlan0 or the USB adapter is not wlan1, change
+wifi_primary_interface or wifi_hotspot_interface in kiosk_settings.json before
+installing. You can also change wifi_hotspot_ssid.
+The adapter must support AP mode; check with:
+   iw list | grep -A 12 "Supported interface modes"
+
+Run ./install_pi.sh again after adding this feature. It installs NetworkManager,
+the root-owned hotspot helper, and the narrow sudo permission required by the
+kiosk service. The WiFi QR button then generates a new random password for each
+five-minute guest session. Stopping the NetworkManager hotspot disconnects every
+guest device when the five minutes expire.
+
+If the kiosk says the guest WiFi could not start, update the Pi installation and
+restart the backend:
+   cd ~/gcash-kiosk
+   ./install_pi.sh
+   sudo systemctl restart gcash-kiosk
+
+Then inspect the exact error with:
+   journalctl -u gcash-kiosk -n 60 --no-pager
+
+The backend runs as:
+   gcash-kiosk.service
+
+Useful commands:
+   sudo systemctl status gcash-kiosk
+   sudo systemctl restart gcash-kiosk
+   journalctl -u gcash-kiosk -f
+
+The browser opens automatically at:
+   http://127.0.0.1:5000
+
+To upload receipts from the iPhone Shortcut, use the Pi's LAN address:
+   http://PI_IP_ADDRESS:5000/api/receipt-share
+
+Find the Pi IP with:
+   hostname -I
