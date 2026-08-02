@@ -251,6 +251,12 @@ def generate_wifi_password():
     return "".join(secrets.choice(alphabet) for _ in range(12))
 
 
+def generate_wifi_session_ssid(base_ssid):
+    suffix = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+    max_base_length = 32 - len(suffix) - 1
+    return f"{str(base_ssid).strip()[:max_base_length]}-{suffix}"
+
+
 def run_wifi_hotspot_helper(action, interface, primary_interface="", ssid="", password=""):
     command = ["sudo", "-n", WIFI_HOTSPOT_HELPER, action, interface]
     input_text = None
@@ -345,8 +351,8 @@ def start_wifi_hotspot():
 
     interface = str(settings.get("wifi_hotspot_interface", "wlan1")).strip()
     primary_interface = str(settings.get("wifi_primary_interface", "wlan0")).strip()
-    ssid = str(settings.get("wifi_hotspot_ssid", "Jessie's Guest WiFi")).strip()
-    if not interface or not primary_interface or not ssid:
+    base_ssid = str(settings.get("wifi_hotspot_ssid", "Jessie's Guest WiFi")).strip()
+    if not interface or not primary_interface or not base_ssid:
         return False, None, "The guest Wi-Fi hotspot settings are incomplete."
 
     with WIFI_HOTSPOT_LOCK:
@@ -359,14 +365,15 @@ def start_wifi_hotspot():
             stop_wifi_hotspot()
 
         password = generate_wifi_password()
-        started, error = run_wifi_hotspot_helper("start", interface, primary_interface, ssid, password)
+        session_ssid = generate_wifi_session_ssid(base_ssid)
+        started, error = run_wifi_hotspot_helper("start", interface, primary_interface, session_ssid, password)
         if not started:
             return False, None, f"Guest Wi-Fi could not start: {error}"
 
         WIFI_HOTSPOT = {
             "active": True,
             "interface": interface,
-            "ssid": ssid,
+            "ssid": session_ssid,
             "password": password,
             "expires_at": now + WIFI_HOTSPOT_DURATION_SECONDS,
             "popup_id": secrets.token_urlsafe(12),

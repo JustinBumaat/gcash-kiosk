@@ -58,7 +58,9 @@ Test
 ----
 Run the shortcut while the kiosk is on. Within about three seconds, the guest
 WiFi QR popup should appear on the Pi screen and stay visible for one minute.
-The guest hotspot remains active for five minutes in total.
+The guest hotspot remains active for five minutes in total. Its WiFi name gets
+a short random suffix each time (for example, Kiosk Guest WiFi-A7K2), so phones
+do not reuse an old saved password.
 
 If it says "Invalid iPhone Shortcut key", make sure the value in the Shortcut
 is exactly the same as wifi_shortcut_key in kiosk_settings.json, then restart
