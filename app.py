@@ -327,6 +327,10 @@ def wifi_hotspot_response():
 def wifi_shortcut_authorized():
     configured_key = str(load_settings().get("wifi_shortcut_key", "")).strip()
     supplied_key = request.headers.get("X-Kiosk-Shortcut-Key", "").strip()
+    if not supplied_key:
+        shortcut_body = request.get_json(silent=True)
+        if isinstance(shortcut_body, dict):
+            supplied_key = str(shortcut_body.get("key", "")).strip()
     return bool(configured_key) and bool(supplied_key) and secrets.compare_digest(supplied_key, configured_key)
 
 

@@ -32,7 +32,7 @@ Set the private shortcut key on the Pi
    The line before it must end with a comma.
    "wifi_shortcut_key": "PASTE_KEY"
 
-5. Save with Ctrl+O, Enter, Ctrl+X, then restart the kiosk backend:
+75. Save with Ctrl+O, Enter, Ctrl+X, then restart the kiosk backend:
    sudo systemctl restart gcash-kiosk
 
 Create the iPhone Shortcut
@@ -47,12 +47,12 @@ Create the iPhone Shortcut
    http://192.168.254.123:5000/api/wifi-hotspot/shortcut
 
 5. Tap Show More in that action and set Method to POST.
-6. Under Headers, add:
-   Header: X-Kiosk-Shortcut-Key
+6. Under Request Body, choose JSON, tap Add new field, and enter:
+   Key: key
    Value: the same random key placed in kiosk_settings.json
 
-7. Leave Request Body empty. Optionally add Show Result after the request to
-   see the confirmation on the iPhone.
+7. You can remove the Headers section. Optionally add Show Result after the
+   request to see the confirmation on the iPhone.
 
 Test
 ----
