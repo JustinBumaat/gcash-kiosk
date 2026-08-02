@@ -19,6 +19,8 @@ let idleSlideResetTimer = null;
 let idleSlideIndex = 0;
 let wifiQrPopupTimer = null;
 let wifiQrCountdownTimer = null;
+let wifiQrPopupPollTimer = null;
+let lastWifiQrPopupId = "";
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const IDLE_SLIDE_INTERVAL_MS = 5000;
@@ -396,6 +398,40 @@ function startWifiQrCountdown(expiresAt) {
     wifiQrCountdownTimer = setInterval(render, 1000);
 }
 
+function showWifiQrPopup(data) {
+    if (!data?.qr_image || !data?.expires_at) return;
+
+    lastWifiQrPopupId = String(data.popup_id || lastWifiQrPopupId);
+    document.getElementById("wifi-qr-image").src = data.qr_image;
+    document.getElementById("wifi-qr-ssid").textContent = data.ssid;
+    document.getElementById("wifi-qr-password").textContent = data.password;
+    const modal = document.getElementById("wifi-qr-modal");
+    modal.hidden = false;
+    startWifiQrCountdown(data.expires_at);
+    clearTimeout(wifiQrPopupTimer);
+    wifiQrPopupTimer = setTimeout(closeWifiQr, WIFI_QR_POPUP_SECONDS * 1000);
+}
+
+async function pollWifiQrPopup() {
+    try {
+        const response = await fetch("/api/wifi-hotspot/status", { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok || !data.success || !data.active) return;
+
+        const popupId = String(data.popup_id || "");
+        if (!popupId || popupId === lastWifiQrPopupId) return;
+        showWifiQrPopup(data);
+    } catch (error) {
+        console.warn("Could not check the guest WiFi popup.", error);
+    }
+}
+
+function startWifiQrPopupPolling() {
+    clearInterval(wifiQrPopupPollTimer);
+    pollWifiQrPopup();
+    wifiQrPopupPollTimer = setInterval(pollWifiQrPopup, 2500);
+}
+
 async function openWifiQr() {
     const button = document.getElementById("btn-wifi-qr");
     if (button?.disabled) return;
@@ -409,14 +445,7 @@ async function openWifiQr() {
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.error || "WiFi QR could not be opened.");
 
-        document.getElementById("wifi-qr-image").src = data.qr_image;
-        document.getElementById("wifi-qr-ssid").textContent = data.ssid;
-        document.getElementById("wifi-qr-password").textContent = data.password;
-        const modal = document.getElementById("wifi-qr-modal");
-        modal.hidden = false;
-        startWifiQrCountdown(data.expires_at);
-        clearTimeout(wifiQrPopupTimer);
-        wifiQrPopupTimer = setTimeout(closeWifiQr, WIFI_QR_POPUP_SECONDS * 1000);
+        showWifiQrPopup(data);
     } catch (error) {
         console.error(error);
         showToast(error.message || "The guest WiFi could not be started.");
@@ -653,3 +682,4 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("pointerdown", armIdleTimeout, { passive: true });
 
 showIdleScreen();
+startWifiQrPopupPolling();

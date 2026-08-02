@@ -5,5 +5,6 @@
   "wifi_hotspot_enabled": true,
   "wifi_primary_interface": "wlan0",
   "wifi_hotspot_interface": "wlan1",
-  "wifi_hotspot_ssid": "Kiosk Guest WiFi"
+  "wifi_hotspot_ssid": "Kiosk Guest WiFi",
+  "wifi_shortcut_key": "PASTE_A_LONG_RANDOM_KEY_HERE"
 }

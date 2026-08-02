@@ -1,0 +1,65 @@
+IPHONE SHORTCUT: OPEN THE KIOSK GUEST WIFI QR
+===============================================
+
+What it does
+------------
+Running the shortcut starts (or reopens) the five-minute guest hotspot and
+opens the WiFi QR popup on the Raspberry Pi touchscreen. The QR code and its
+temporary password stay on the Pi screen; they are never returned to the
+iPhone Shortcut.
+
+Before you begin
+----------------
+1. The iPhone and Raspberry Pi must be connected to the same main/store WiFi.
+   Do not run the shortcut while the iPhone is connected to the guest hotspot.
+2. Keep the Pi on a stable LAN IP address. Its current address can be checked
+   on the Pi with: hostname -I
+3. Do not forward port 5000 on the router or expose this shortcut to the
+   internet.
+
+Set the private shortcut key on the Pi
+--------------------------------------
+1. SSH into the Pi and run this command to create a random key:
+   python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+
+2. Copy the result somewhere private. It is the key used only by your iPhone
+   Shortcut.
+
+3. Open the kiosk settings file:
+   nano ~/gcash-kiosk/gcash-kiosk-480x800-resized/kiosk_settings.json
+
+4. Add this line inside the final }, replacing PASTE_KEY with the random key.
+   The line before it must end with a comma.
+   "wifi_shortcut_key": "PASTE_KEY"
+
+5. Save with Ctrl+O, Enter, Ctrl+X, then restart the kiosk backend:
+   sudo systemctl restart gcash-kiosk
+
+Create the iPhone Shortcut
+--------------------------
+1. Open the Shortcuts app and tap +.
+2. Name it: Open Kiosk WiFi QR.
+3. Add the action: Get Contents of URL.
+4. Set the URL to:
+   http://PI_IP_ADDRESS:5000/api/wifi-hotspot/shortcut
+
+   Example, if the Pi address is 192.168.254.123:
+   http://192.168.254.123:5000/api/wifi-hotspot/shortcut
+
+5. Tap Show More in that action and set Method to POST.
+6. Under Headers, add:
+   Header: X-Kiosk-Shortcut-Key
+   Value: the same random key placed in kiosk_settings.json
+
+7. Leave Request Body empty. Optionally add Show Result after the request to
+   see the confirmation on the iPhone.
+
+Test
+----
+Run the shortcut while the kiosk is on. Within about three seconds, the guest
+WiFi QR popup should appear on the Pi screen and stay visible for one minute.
+The guest hotspot remains active for five minutes in total.
+
+If it says "Invalid iPhone Shortcut key", make sure the value in the Shortcut
+is exactly the same as wifi_shortcut_key in kiosk_settings.json, then restart
+the kiosk backend again.

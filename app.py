@@ -29,6 +29,7 @@ def load_settings():
         "wifi_primary_interface": "wlan0",
         "wifi_hotspot_interface": "wlan1",
         "wifi_hotspot_ssid": "Jessie's Guest WiFi",
+        "wifi_shortcut_key": "",
     }
 
     try:
@@ -42,6 +43,7 @@ def load_settings():
     env_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
     env_chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     env_upload_key = os.environ.get("RECEIPT_UPLOAD_KEY", "").strip()
+    env_wifi_shortcut_key = os.environ.get("WIFI_SHORTCUT_KEY", "").strip()
 
     if env_token:
         settings["telegram_bot_token"] = env_token
@@ -49,6 +51,8 @@ def load_settings():
         settings["telegram_chat_id"] = env_chat_id
     if env_upload_key:
         settings["receipt_upload_key"] = env_upload_key
+    if env_wifi_shortcut_key:
+        settings["wifi_shortcut_key"] = env_wifi_shortcut_key
 
     return settings
 
@@ -150,6 +154,7 @@ WIFI_HOTSPOT = {
     "ssid": "",
     "password": "",
     "expires_at": 0,
+    "popup_id": "",
 }
 
 
@@ -288,6 +293,7 @@ def clear_wifi_hotspot_state():
         "ssid": "",
         "password": "",
         "expires_at": 0,
+        "popup_id": "",
     }
 
 
@@ -309,11 +315,60 @@ def local_kiosk_request():
 def wifi_hotspot_response():
     return {
         "success": True,
+        "active": True,
         "ssid": WIFI_HOTSPOT["ssid"],
         "password": WIFI_HOTSPOT["password"],
         "expires_at": WIFI_HOTSPOT["expires_at"],
+        "popup_id": WIFI_HOTSPOT["popup_id"],
         "qr_image": make_wifi_qr_data_url(WIFI_HOTSPOT["ssid"], WIFI_HOTSPOT["password"]),
     }
+
+
+def wifi_shortcut_authorized():
+    configured_key = str(load_settings().get("wifi_shortcut_key", "")).strip()
+    supplied_key = request.headers.get("X-Kiosk-Shortcut-Key", "").strip()
+    return bool(configured_key) and bool(supplied_key) and secrets.compare_digest(supplied_key, configured_key)
+
+
+def start_wifi_hotspot():
+    global WIFI_HOTSPOT_TIMER, WIFI_HOTSPOT
+
+    settings = load_settings()
+    if not setting_is_enabled(settings.get("wifi_hotspot_enabled")):
+        return False, None, "The guest Wi-Fi hotspot is disabled in kiosk_settings.json."
+
+    interface = str(settings.get("wifi_hotspot_interface", "wlan1")).strip()
+    primary_interface = str(settings.get("wifi_primary_interface", "wlan0")).strip()
+    ssid = str(settings.get("wifi_hotspot_ssid", "Jessie's Guest WiFi")).strip()
+    if not interface or not primary_interface or not ssid:
+        return False, None, "The guest Wi-Fi hotspot settings are incomplete."
+
+    with WIFI_HOTSPOT_LOCK:
+        now = int(time.time())
+        if WIFI_HOTSPOT["active"] and WIFI_HOTSPOT["expires_at"] > now:
+            WIFI_HOTSPOT["popup_id"] = secrets.token_urlsafe(12)
+            return True, wifi_hotspot_response(), ""
+
+        if WIFI_HOTSPOT["active"]:
+            stop_wifi_hotspot()
+
+        password = generate_wifi_password()
+        started, error = run_wifi_hotspot_helper("start", interface, primary_interface, ssid, password)
+        if not started:
+            return False, None, f"Guest Wi-Fi could not start: {error}"
+
+        WIFI_HOTSPOT = {
+            "active": True,
+            "interface": interface,
+            "ssid": ssid,
+            "password": password,
+            "expires_at": now + WIFI_HOTSPOT_DURATION_SECONDS,
+            "popup_id": secrets.token_urlsafe(12),
+        }
+        WIFI_HOTSPOT_TIMER = threading.Timer(WIFI_HOTSPOT_DURATION_SECONDS, expire_wifi_hotspot)
+        WIFI_HOTSPOT_TIMER.daemon = True
+        WIFI_HOTSPOT_TIMER.start()
+        return True, wifi_hotspot_response(), ""
 
 
 def receipt_upload_authorized():
@@ -363,48 +418,40 @@ def generate():
 
 @app.route("/api/wifi-hotspot", methods=["POST"])
 def wifi_hotspot():
-    global WIFI_HOTSPOT_TIMER, WIFI_HOTSPOT
-
     if not local_kiosk_request():
         return jsonify({"success": False, "error": "This action is available only from the kiosk screen."}), 403
 
-    settings = load_settings()
-    if not setting_is_enabled(settings.get("wifi_hotspot_enabled")):
-        return jsonify({"success": False, "error": "The guest Wi-Fi hotspot is disabled in kiosk_settings.json."}), 503
+    started, response, error = start_wifi_hotspot()
+    if not started:
+        return jsonify({"success": False, "error": error}), 503
+    return jsonify(response)
 
-    interface = str(settings.get("wifi_hotspot_interface", "wlan1")).strip()
-    primary_interface = str(settings.get("wifi_primary_interface", "wlan0")).strip()
-    ssid = str(settings.get("wifi_hotspot_ssid", "Jessie's Guest WiFi")).strip()
-    if not interface or not primary_interface or not ssid:
-        return jsonify({"success": False, "error": "The guest Wi-Fi hotspot settings are incomplete."}), 503
+
+@app.route("/api/wifi-hotspot/status", methods=["GET"])
+def wifi_hotspot_status():
+    if not local_kiosk_request():
+        return jsonify({"success": False, "error": "This action is available only from the kiosk screen."}), 403
 
     with WIFI_HOTSPOT_LOCK:
-        now = int(time.time())
-        if WIFI_HOTSPOT["active"] and WIFI_HOTSPOT["expires_at"] > now:
-            return jsonify(wifi_hotspot_response())
-
-        if WIFI_HOTSPOT["active"]:
-            stop_wifi_hotspot()
-
-        password = generate_wifi_password()
-        started, error = run_wifi_hotspot_helper("start", interface, primary_interface, ssid, password)
-        if not started:
-            return jsonify({
-                "success": False,
-                "error": f"Guest Wi-Fi could not start: {error}",
-            }), 503
-
-        WIFI_HOTSPOT = {
-            "active": True,
-            "interface": interface,
-            "ssid": ssid,
-            "password": password,
-            "expires_at": now + WIFI_HOTSPOT_DURATION_SECONDS,
-        }
-        WIFI_HOTSPOT_TIMER = threading.Timer(WIFI_HOTSPOT_DURATION_SECONDS, expire_wifi_hotspot)
-        WIFI_HOTSPOT_TIMER.daemon = True
-        WIFI_HOTSPOT_TIMER.start()
+        if not WIFI_HOTSPOT["active"] or WIFI_HOTSPOT["expires_at"] <= int(time.time()):
+            return jsonify({"success": True, "active": False})
         return jsonify(wifi_hotspot_response())
+
+
+@app.route("/api/wifi-hotspot/shortcut", methods=["POST"])
+def wifi_hotspot_shortcut():
+    if not wifi_shortcut_authorized():
+        return jsonify({"success": False, "error": "Invalid iPhone Shortcut key."}), 401
+
+    started, response, error = start_wifi_hotspot()
+    if not started:
+        return jsonify({"success": False, "error": error}), 503
+
+    return jsonify({
+        "success": True,
+        "message": "The WiFi QR popup has opened on the kiosk.",
+        "expires_at": response["expires_at"],
+    })
 
 
 @app.route("/api/cashin-notify", methods=["POST"])

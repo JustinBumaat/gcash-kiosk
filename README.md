@@ -12,6 +12,8 @@ python app.py
 ```
 
 For Raspberry Pi installation and kiosk auto-start, follow [RASPBERRY_PI_SETUP.txt](RASPBERRY_PI_SETUP.txt).
+For an iPhone Shortcut that opens the guest WiFi QR popup on the Pi screen,
+follow [IPHONE_WIFI_QR_SHORTCUT_SETUP.txt](IPHONE_WIFI_QR_SHORTCUT_SETUP.txt).
 
 ## Private settings
 

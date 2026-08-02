@@ -79,5 +79,14 @@ The browser opens automatically at:
 To upload receipts from the iPhone Shortcut, use the Pi's LAN address:
    http://PI_IP_ADDRESS:5000/api/receipt-share
 
+To open the guest WiFi QR popup from a separate iPhone Shortcut, keep the
+iPhone on the same main WiFi as the Pi and use:
+   http://PI_IP_ADDRESS:5000/api/wifi-hotspot/shortcut
+
+Add a long random value as wifi_shortcut_key in kiosk_settings.json. The
+Shortcut must send that value in the X-Kiosk-Shortcut-Key request header.
+Generate a safe value on the Pi with:
+   python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+
 Find the Pi IP with:
    hostname -I
